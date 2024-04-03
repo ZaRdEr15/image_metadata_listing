@@ -1,47 +1,67 @@
 #include <iostream>
+#include <algorithm>
+#include <filesystem>
+#include <fstream> // ifstream
 #include "TinyEXIF.h"
+#include "arguments.h"
+namespace fs = std::filesystem; // for convenience
 
-#define N_ARGUMENTS 4
+#define DEBUG_MODE 1
 
-#define UTILITY_POS 0
-#define FILENAME_POS 1
-#define CAPTUREDATE_POS 2
-#define CAMERAMODEL_POS 3
+#define COLUMN_WIDTH 25
+#define FILENAME_WIDTH 50
 
-void showUsage(std::string utility) {
-    std::cout << "Usage: " << "[" << utility << "] file_name capture_date camera_model" << std::endl;
-    std::cout << "file_name:    case-insensitive, exact match or partial match with * wildcard symbol" << std::endl;
-    std::cout << "capture_date: exact match" << std::endl;
-    std::cout << "camera_model: case-insensitive, exact match or partial match with * wildcard symbol" << std::endl;
+enum DataType {CaptureDate, CameraModel};
+
+inline std::string enumToString(DataType type) {
+    return type == CaptureDate ? "Capture Date" : "Camera Model";
 }
 
-bool checkArgc(int argc, char *argv[]) {
-    if(argc != N_ARGUMENTS) {
-        std::cout << "Error: there were " << argc - 1 << " arguments while the utility requires " << N_ARGUMENTS - 1 << ".\n";
-        showUsage(argv[UTILITY_POS]);
-        return false;
+// Removes timestamp and replaces ":" with "-"
+inline std::string formatDate(std::string date) {
+    if(!date.empty()) {
+        date = date.erase(10);
+        std::replace(date.begin(), date.end(), ':', '-');
     }
-    return true;
+    return date;
 }
 
-bool checkArgv(char *argv[]) {
-    // Check if 1, 2 and 3 arguments are correct
-    return true;
-}
-
-bool checkUsage(int argc, char *argv[]) {
-    if(!checkArgc(argc, argv)) {
-        return false;
-    }
-    if(!checkArgv(argv)) {
-        return false;
+/*
+    Shows JPEG capture date and camera model data
+    If the data is empty, prints "Doesn't exist"
+*/
+void showData(std::string data, DataType type) {
+    std::cout << enumToString(type) << ": ";
+    if(!data.empty()) {
+        std::cout << std::setw(COLUMN_WIDTH) << data;
+    } else {
+        std::cout << std::setw(COLUMN_WIDTH) << "Doesn't exist";
     }
 }
 
-int main(int argc, char *argv[]) {
-    if(!checkUsage(argc, argv)) {
-        return 1;
+int main(int argc, char* argv[]) {
+
+    if(DEBUG_MODE) {
+        showArgs(argc, argv);
     }
 
+    auto current_path = fs::current_path();
+
+    for (const auto& dir_entry : fs::recursive_directory_iterator(current_path)) {
+
+        // Open a stream to read just the necessary parts of the image file
+        std::ifstream istream(dir_entry.path(), std::ifstream::binary);
+
+        // Parse image EXIF and XMP metadata
+        TinyEXIF::EXIFInfo imageEXIF(istream);
+
+        if(imageEXIF.Fields) {
+            std::cout << std::left << std::setw(FILENAME_WIDTH) << dir_entry.path().filename() << ": ";
+            imageEXIF.DateTimeOriginal = formatDate(imageEXIF.DateTimeOriginal);
+            showData(imageEXIF.DateTimeOriginal, CaptureDate);
+            showData(imageEXIF.Model, CameraModel);
+            std::cout << std::endl;
+        }
+    }
     return 0;
 }
