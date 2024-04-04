@@ -31,21 +31,24 @@ inline std::string formatDate(std::string date) {
     If the data is empty, prints "Doesn't exist"
 */
 void showData(std::string data, DataType type) {
-    std::cout << enumToString(type) << ": ";
+    cout << enumToString(type) << ": ";
     if(!data.empty()) {
-        std::cout << std::setw(COLUMN_WIDTH) << data;
+        cout << std::setw(COLUMN_WIDTH) << data;
     } else {
-        std::cout << std::setw(COLUMN_WIDTH) << "Doesn't exist";
+        cout << std::setw(COLUMN_WIDTH) << "Doesn't exist";
     }
 }
 
 int main(int argc, char* argv[]) {
 
+    std::string directory;
+    std::vector<std::string> options = getOptions(argc, argv, directory);
+
     if(DEBUG_MODE) {
-        showArgs(argc, argv);
+        showOptions(options);
     }
 
-    auto current_path = fs::current_path();
+    /* auto current_path = fs::current_path();
 
     for (const auto& dir_entry : fs::recursive_directory_iterator(current_path)) {
 
@@ -56,12 +59,12 @@ int main(int argc, char* argv[]) {
         TinyEXIF::EXIFInfo imageEXIF(istream);
 
         if(imageEXIF.Fields) {
-            std::cout << std::left << std::setw(FILENAME_WIDTH) << dir_entry.path().filename() << ": ";
+            cout << std::left << std::setw(FILENAME_WIDTH) << dir_entry.path().filename() << ": ";
             imageEXIF.DateTimeOriginal = formatDate(imageEXIF.DateTimeOriginal);
             showData(imageEXIF.DateTimeOriginal, CaptureDate);
             showData(imageEXIF.Model, CameraModel);
-            std::cout << std::endl;
+            cout << endl;
         }
-    }
+    } */
     return 0;
 }
