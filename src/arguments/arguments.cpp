@@ -28,13 +28,13 @@ void showArgs(int argc, char* argv[]) {
 void showOptions(std::string name, std::string date, std::string model) {
     std::cout << "Options: \n";
     if(!name.empty()) {
-        std::cout << "File name: " << name;
+        std::cout << "File name: " << name << "\n";
     }
     if(!date.empty()) {
-        std::cout << "\nCapture date: " << date;
+        std::cout << "Capture date: " << date << "\n";
     }
     if(!model.empty()) {
-        std::cout << "\nCamera model: " << model << std::endl;
+        std::cout << "Camera model: " << model << "\n";
     }      
 }
 
@@ -46,22 +46,41 @@ OptionsResult getOptions(int argc, char* argv[],
                 std::string& name, std::string& date,
                 std::string& model, std::string& directory_path) {
     int opt;
+    // Check if option that was provided has a value
+    bool name_opt = false; 
+    bool date_opt = false;
+    bool model_opt = false;
     // Handles options with values such as -n, -d and -m 
     while((opt = getopt(argc, argv, "n:d:m:")) != EOF) {
         switch(opt) {
             case 'n':
                 name = optarg;
+                name_opt = true;
                 break;
             case 'd':
                 date = optarg;
+                date_opt = true;
                 break;
             case 'm':
                 model = optarg;
+                model_opt = true;
                 break;
             default:
                 return InvalidOption;
         }
     }
+
+    // Return NoValue result if option provided but without a value
+    if(name_opt) {
+        if(name.empty()) return NoValue;
+    }
+    if(date_opt) {
+        if(date.empty()) return NoValue;
+    }
+    if(model_opt) {
+        if(date.empty()) return NoValue;
+    }
+
     if(optind >= argc) {
         std::cerr << "ERROR: No directory provided." << std::endl;
         return MissingDirectory;
@@ -88,22 +107,18 @@ void validateOptions(int argc, char* argv[],
                      std::string& model, std::string& directory_path) {
     switch(getOptions(argc, argv, name, date, model, directory_path)) {
         case InvalidOption:
+        case NoValue:
+            std::cerr << "ERROR: No value provided for the option." << std::endl;
         case MissingDirectory:
         case TooManyArgs:
             showUsage(argv[UTILITY_POS]);
         case Success:
             break;
     }
+
     // Validate model and name to have only one '*' wildcard symbol
     if(countWildcard(name) > WILDCARD_MAX || countWildcard(model) > WILDCARD_MAX) {
         std::cerr << "ERROR: There was more than 1 '*' symbol for option." << std::endl;
         showUsage(argv[UTILITY_POS]);
-    }
-}
-
-// Convert all characters in a string to lowercase
-void stringToLower(std::string& s) {
-    for(size_t i = 0; i < s.size(); i++) {
-        s[i] = static_cast<char>(tolower(s[i]));
     }
 }

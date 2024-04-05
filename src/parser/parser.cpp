@@ -1,19 +1,5 @@
 #include <iomanip>      // std::setw
-#include <algorithm>    // std::replace
 #include "parser.h"
-
-inline std::string enumToString(DataType type) {
-    return type == CaptureDate ? "Capture Date" : "Camera Model";
-}
-
-// Removes timestamp and replaces ":" with "-"
-inline std::string formatDate(std::string date) {
-    if(!date.empty()) {
-        date = date.erase(10);
-        std::replace(date.begin(), date.end(), ':', '-');
-    }
-    return date;
-}
 
 /*
     Shows JPEG capture date and camera model data
@@ -21,9 +7,10 @@ inline std::string formatDate(std::string date) {
 */
 void showData(std::string data, DataType type) {
     std::cout << enumToString(type) << ": ";
+    int column_width = type == CaptureDate ? DATE_COLUMN_WIDTH : MODEL_COLUMN_WIDTH;
     if(!data.empty()) {
-        std::cout << std::setw(COLUMN_WIDTH) << data;
+        std::cout << std::setw(column_width) << data;
     } else {
-        std::cout << std::setw(COLUMN_WIDTH) << "Doesn't exist";
+        std::cout << std::setw(column_width) << "Doesn't exist";
     }
 }
