@@ -1,6 +1,9 @@
 #include <filesystem>
 #include <fstream> // ifstream
+
 #include "TinyEXIF.h"
+
+// Helper function headers
 #include "arguments.h"
 #include "parser.h"
 
@@ -10,18 +13,24 @@ namespace fs = std::filesystem; // for convenience
 
 int main(int argc, char* argv[]) {
 
-    std::string directory;
-    std::string file_name, capture_date, camera_model;
-    getOptions(argc, argv, file_name, capture_date, camera_model, directory);
+    std::string file_name, capture_date, camera_model, directory;
+    validateOptions(argc, argv, file_name, capture_date, camera_model, directory);
 
     if(DEBUG_MODE) {
         showArgs(argc, argv);
         showOptions(file_name, capture_date, camera_model);
     }
 
-    /* auto current_path = fs::current_path();
+    fs::path path;
+    try {
+        fs::current_path(directory); // Switch to the provided directory
+        path = fs::current_path();
+    } catch(fs::filesystem_error const& ex) {
+        std::cerr << ex.what() << std::endl;
+    }
+    
 
-    for (const auto& dir_entry : fs::recursive_directory_iterator(current_path)) {
+    /* for (const auto& dir_entry : fs::recursive_directory_iterator(path)) {
 
         // Open a stream to read just the necessary parts of the image file
         std::ifstream istream(dir_entry.path(), std::ifstream::binary);

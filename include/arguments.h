@@ -5,9 +5,11 @@
 
 #define UTILITY_POS 0
 
+enum OptionsResult {Success, InvalidOption, MissingDirectory, TooManyArgs};
+
 void showUsage(std::string utility);
 void showArgs(int argc, char* argv[]);
 void showOptions(std::string name, std::string date, std::string model);
-void getOptions(int argc, char* argv[], 
-                std::string& name, std::string& date,
-                std::string& model, std::string& directory_path);
+void validateOptions(int argc, char* argv[], 
+                     std::string& name, std::string& date,
+                     std::string& model, std::string& directory_path);

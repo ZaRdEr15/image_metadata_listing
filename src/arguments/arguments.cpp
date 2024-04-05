@@ -10,7 +10,6 @@ void showUsage(std::string utility) {
 
 // Show arguments provided for the utility
 void showArgs(int argc, char* argv[]) {
-    
     std::cout << "Arguments: " << std::endl;
     for(int i = 0; i < argc; i++) {
         std::cout << "[" << i << "]: " << argv[i] << "\n";
@@ -25,7 +24,11 @@ void showOptions(std::string name, std::string date, std::string model) {
               << "\nCamera model: " << model << std::endl;
 }
 
-void getOptions(int argc, char* argv[], 
+/*
+    Saves options to corresponding string variables and
+    returns a result code
+*/
+OptionsResult getOptions(int argc, char* argv[], 
                 std::string& name, std::string& date,
                 std::string& model, std::string& directory_path) {
     int opt;
@@ -42,16 +45,34 @@ void getOptions(int argc, char* argv[],
                 model = optarg;
                 break;
             default:
-                showUsage(argv[UTILITY_POS]);
+                return InvalidOption;
         }
     }
     if(optind >= argc) {
         std::cerr << "ERROR: No directory provided." << std::endl;
-        showUsage(argv[UTILITY_POS]);
+        return MissingDirectory;
     }
     if(optind != (argc - 1)) {
         std::cerr << "ERROR: Too many arguments provided." << std::endl;
-        showUsage(argv[UTILITY_POS]);
+        return TooManyArgs;
     }
     directory_path = argv[optind];
+    return Success;
+}
+
+/*
+    Validates if options are correct and saves each option to the
+    corresponding string variable
+*/
+void validateOptions(int argc, char* argv[], 
+                     std::string& name, std::string& date,
+                     std::string& model, std::string& directory_path) {
+    switch(getOptions(argc, argv, name, date, model, directory_path)) {
+        case InvalidOption:
+        case MissingDirectory:
+        case TooManyArgs:
+            showUsage(argv[UTILITY_POS]);
+        case Success:
+            break;
+    }
 }
