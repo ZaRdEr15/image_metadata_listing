@@ -1,10 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <unistd.h>
-
-using std::cout;
-using std::cerr;
-using std::endl;
+#include "common_includes.h"
 
 #define N_ARGUMENTS_MIN 2
 #define N_ARGUMENTS_MAX 8
@@ -13,5 +7,7 @@ using std::endl;
 
 void showUsage(std::string utility);
 void showArgs(int argc, char* argv[]);
-std::vector<std::string> getOptions(int argc, char* argv[], std::string& directory_path);
-void showOptions(std::vector<std::string> options);
+void showOptions(std::string name, std::string date, std::string model);
+void getOptions(int argc, char* argv[], 
+                std::string& name, std::string& date,
+                std::string& model, std::string& directory_path);

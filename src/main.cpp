@@ -1,51 +1,22 @@
-#include <iostream>
-#include <algorithm>
 #include <filesystem>
 #include <fstream> // ifstream
 #include "TinyEXIF.h"
 #include "arguments.h"
+#include "parser.h"
+
 namespace fs = std::filesystem; // for convenience
 
 #define DEBUG_MODE 1
 
-#define COLUMN_WIDTH 25
-#define FILENAME_WIDTH 50
-
-enum DataType {CaptureDate, CameraModel};
-
-inline std::string enumToString(DataType type) {
-    return type == CaptureDate ? "Capture Date" : "Camera Model";
-}
-
-// Removes timestamp and replaces ":" with "-"
-inline std::string formatDate(std::string date) {
-    if(!date.empty()) {
-        date = date.erase(10);
-        std::replace(date.begin(), date.end(), ':', '-');
-    }
-    return date;
-}
-
-/*
-    Shows JPEG capture date and camera model data
-    If the data is empty, prints "Doesn't exist"
-*/
-void showData(std::string data, DataType type) {
-    cout << enumToString(type) << ": ";
-    if(!data.empty()) {
-        cout << std::setw(COLUMN_WIDTH) << data;
-    } else {
-        cout << std::setw(COLUMN_WIDTH) << "Doesn't exist";
-    }
-}
-
 int main(int argc, char* argv[]) {
 
     std::string directory;
-    std::vector<std::string> options = getOptions(argc, argv, directory);
+    std::string file_name, capture_date, camera_model;
+    getOptions(argc, argv, file_name, capture_date, camera_model, directory);
 
     if(DEBUG_MODE) {
-        showOptions(options);
+        showArgs(argc, argv);
+        showOptions(file_name, capture_date, camera_model);
     }
 
     /* auto current_path = fs::current_path();
@@ -59,11 +30,11 @@ int main(int argc, char* argv[]) {
         TinyEXIF::EXIFInfo imageEXIF(istream);
 
         if(imageEXIF.Fields) {
-            cout << std::left << std::setw(FILENAME_WIDTH) << dir_entry.path().filename() << ": ";
+            std::cout << std::left << std::setw(FILENAME_WIDTH) << dir_entry.path().filename() << ": ";
             imageEXIF.DateTimeOriginal = formatDate(imageEXIF.DateTimeOriginal);
             showData(imageEXIF.DateTimeOriginal, CaptureDate);
             showData(imageEXIF.Model, CameraModel);
-            cout << endl;
+            std::cout << std::endl;
         }
     } */
     return 0;
