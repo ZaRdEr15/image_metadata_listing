@@ -1,3 +1,6 @@
+#ifndef PARSER_H
+#define PARSER_H
+
 #include <algorithm>    // std::replace
 #include "common_includes.h"
 
@@ -21,3 +24,5 @@ inline std::string formatDate(std::string date) {
 }
 
 void showData(std::string data, DataType type);
+
+#endif // PARSER_H

@@ -78,7 +78,7 @@ OptionsResult getOptions(int argc, char* argv[],
         if(date.empty()) return NoValue;
     }
     if(model_opt) {
-        if(date.empty()) return NoValue;
+        if(model.empty()) return NoValue;
     }
 
     if(optind >= argc) {

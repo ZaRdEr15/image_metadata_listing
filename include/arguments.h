@@ -1,3 +1,6 @@
+#ifndef ARGUMENTS_H
+#define ARGUMENTS_H
+
 #include "common_includes.h"
 
 #define N_ARGUMENTS_MIN 2
@@ -23,3 +26,5 @@ inline void stringToLower(std::string& s) {
         s[i] = static_cast<char>(tolower(s[i]));
     }
 }
+
+#endif // ARGUMENTS_H
