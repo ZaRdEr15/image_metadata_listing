@@ -3,6 +3,8 @@
 #define N_ARGUMENTS_MIN 2
 #define N_ARGUMENTS_MAX 8
 
+#define WILDCARD_MAX 1
+
 #define UTILITY_POS 0
 
 enum OptionsResult {Success, InvalidOption, MissingDirectory, TooManyArgs};
@@ -13,3 +15,4 @@ void showOptions(std::string name, std::string date, std::string model);
 void validateOptions(int argc, char* argv[], 
                      std::string& name, std::string& date,
                      std::string& model, std::string& directory_path);
+void stringToLower(std::string& s);

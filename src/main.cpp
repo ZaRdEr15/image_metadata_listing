@@ -15,6 +15,8 @@ int main(int argc, char* argv[]) {
 
     std::string file_name, capture_date, camera_model, directory;
     validateOptions(argc, argv, file_name, capture_date, camera_model, directory);
+    stringToLower(file_name); // case insensitive
+    stringToLower(camera_model); // case insensitive
 
     if(DEBUG_MODE) {
         showArgs(argc, argv);
@@ -27,6 +29,7 @@ int main(int argc, char* argv[]) {
         path = fs::current_path();
     } catch(fs::filesystem_error const& ex) {
         std::cerr << ex.what() << std::endl;
+        exit(EXIT_FAILURE);
     }
     
 

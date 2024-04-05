@@ -1,10 +1,18 @@
-#include <unistd.h> // getopt, optarg, optind
+#include <unistd.h>     // getopt, optarg, optind
+#include <algorithm>    // std::count
 #include "arguments.h"
 
 // Show utility usage
 void showUsage(std::string utility) {
-    std::cout << "Usage: " << utility 
-              << " [-n \"file_name\"] [-d \"capture_date\"] [-m \"camera_model\"] directory" << std::endl;
+    std::cout << "\nUsage: " << utility 
+              << " [-n \"file_name\"]" 
+              << " [-d \"capture_date\"]" 
+              << " [-m \"camera_model\"]" 
+              << " directory\n"
+              << "\n\"file_name\" and \"camera_model\" support wildcard symbol '*' for partial matching, such as:\n"
+              << "Starting with: \"abc*\", ending with: \"*abc\", or any: \"*\".\n"
+              << "\"capture_date\" must be an exact match such as \"2024-01-01\".\n" 
+              << "Every optional field must be inside quotation marks: -n \"file\", -m \"model\" -d \"2010-01-01\".\n" << std::endl;
     exit(EXIT_FAILURE);
 }
 
@@ -18,10 +26,16 @@ void showArgs(int argc, char* argv[]) {
 
 // Show options provided for the utility
 void showOptions(std::string name, std::string date, std::string model) {
-    std::cout << "Options: \n"
-              << "File name: " << name
-              << "\nCapture date: " << date
-              << "\nCamera model: " << model << std::endl;
+    std::cout << "Options: \n";
+    if(!name.empty()) {
+        std::cout << "File name: " << name;
+    }
+    if(!date.empty()) {
+        std::cout << "\nCapture date: " << date;
+    }
+    if(!model.empty()) {
+        std::cout << "\nCamera model: " << model << std::endl;
+    }      
 }
 
 /*
@@ -60,6 +74,11 @@ OptionsResult getOptions(int argc, char* argv[],
     return Success;
 }
 
+// Count how many wildcard symbols inside string
+int countWildcard(std::string s) {
+    return std::count(s.begin(), s.end(), '*');
+}
+
 /*
     Validates if options are correct and saves each option to the
     corresponding string variable
@@ -74,5 +93,17 @@ void validateOptions(int argc, char* argv[],
             showUsage(argv[UTILITY_POS]);
         case Success:
             break;
+    }
+    // Validate model and name to have only one '*' wildcard symbol
+    if(countWildcard(name) > WILDCARD_MAX || countWildcard(model) > WILDCARD_MAX) {
+        std::cerr << "ERROR: There was more than 1 '*' symbol for option." << std::endl;
+        showUsage(argv[UTILITY_POS]);
+    }
+}
+
+// Convert all characters in a string to lowercase
+void stringToLower(std::string& s) {
+    for(size_t i = 0; i < s.size(); i++) {
+        s[i] = static_cast<char>(tolower(s[i]));
     }
 }
