@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include <algorithm>    // std::replace
+#include <filesystem>
 #include "common_includes.h"
 
 #define MODEL_COLUMN_WIDTH 30
@@ -24,5 +25,7 @@ inline std::string formatDate(std::string date) {
 }
 
 void showData(std::string data, DataType type);
+size_t searchFiles(std::filesystem::path path, std::string name_opt, std::string date_opt, std::string model_opt);
+std::filesystem::path changeDirectory(std::string dir);
 
 #endif // PARSER_H

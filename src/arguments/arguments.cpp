@@ -172,20 +172,21 @@ std::string getMatchPattern(std::string opt, std::string regex, std::string end_
     If the option is empty, returns true;
 */
 bool matchName(std::string name_option, std::string file_name) {
+    const std::string jpg_ext = "\\.jpg$";
+    const std::string char_set = "[\\w-]";
     // If the option is empty return true
-    bool match = true;
     if(!name_option.empty()) { // if there is a name option, then check if there is a match
-        match = false;
         // Set regex according to wildcard symbol
-        std::string regex_pattern = getMatchPattern(name_option, "[\\w-]"); // matches a-zA-Z0-9_-
-        regex_pattern += "\\.jpg$"; // matches for any .jpg file
+        std::string regex_pattern = getMatchPattern(name_option, char_set); // matches a-zA-Z0-9_-
+        regex_pattern += jpg_ext; // matches for any .jpg file
 
         std::regex name_regex(regex_pattern);
         
         stringToLower(file_name); // case insensitive match
-        match = std::regex_match(file_name, name_regex);
+        return std::regex_match(file_name, name_regex);
     }
-    return match;
+    std::regex default_regex(char_set + "+" + jpg_ext);
+    return std::regex_match(file_name, default_regex); // check if the file is a .jpg file
 }
 
 /* 
