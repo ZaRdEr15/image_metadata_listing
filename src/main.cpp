@@ -1,6 +1,5 @@
 #include <filesystem>
 #include <fstream> // ifstream
-#include <regex>
 
 // External library for EXIF metadata parsing
 #include "TinyEXIF.h"
@@ -13,103 +12,47 @@ namespace fs = std::filesystem; // for convenience
 
 #define DEBUG_MODE 1
 
-bool matchDate(std::string date_option, std::string exif_date) {
-    // If the option is empty return true
-    bool match = true;
-    if(!date_option.empty()) { // if there is a capture date option, then check if there is a match
-        match = false;
-        // Exact date match
-        if(date_option == exif_date) {
-            match = true;
-        }
-    }
-    return match;
-}
-
-// Remove a wildcard to allow to create regex pattern
-inline std::string removeWildcard(std::string s) {
-    s.erase(std::remove(s.begin(), s.end(), '*'), s.end());
-    return s;
-}
-
-std::string getMatchPattern(std::string opt, std::string regex) {
-    if(countWildcard(opt)) { // if there is a wildcard symbol
-        if(opt[0] == '*') {
-            if(opt.size() == 1) {
-                return regex + "+"; // "*" as option
-            }
-            return regex + "*" + removeWildcard(opt) + "$"; // "*abc" as option
-        }
-        return "^" + removeWildcard(opt) + regex + "*"; // "abc*" as option
-    }
-    return "^" + opt + "$"; // exact match as there is no wildcard symbols
-}
-
-bool matchName(std::string name_option, std::string file_name) {
-    // If the option is empty return true
-    bool match = true;
-    if(!name_option.empty()) { // if there is a camera model option, then check if there is a match
-        match = false;
-        // Set regex according to wildcard symbol
-        std::string regex_pattern = getMatchPattern(name_option, "[\\w]"); // matches a-zA-Z0-9_
-        regex_pattern += "\\.jpg"; // matches for any .jpg file
-        std::cout << regex_pattern << std::endl; // DEBUG
-
-        std::regex model_regex(regex_pattern);
-        
-        stringToLower(file_name);
-        match = std::regex_match(file_name, model_regex);
-    }
-    return match;
-}
-
-bool matchModel(std::string model_option, std::string exif_model) {
-    // If the option is empty return true
-    bool match = true;
-    if(!model_option.empty()) { // if there is a camera model option, then check if there is a match
-        match = false;
-        // Set regex according to wildcard symbol
-        std::string regex_pattern = getMatchPattern(model_option, "[\\w ]"); // matches a-zA-Z0-9_ and a whitespace
-
-        std::regex model_regex(regex_pattern);
-        
-        stringToLower(exif_model);
-        match = std::regex_match(exif_model, model_regex);
-    }
-    return match;
-}
-
 /*
     Search a directory for .jpg extension files recursively and output metadata on the screen
     Return how many files where found
 */
-size_t searchFiles(fs::path path, std::string capture_date, std::string camera_model) {
+size_t searchFiles(fs::path path, std::string name_opt, std::string date_opt, std::string model_opt) {
     size_t count = 0;
     for (const auto& dir_entry : fs::recursive_directory_iterator(path)) {
+
+        fs::path file_path = dir_entry.path();
+
         // Only open a stream if it is a file and not a directory
-        if(fs::is_regular_file(dir_entry.path())) {
-            // Open a stream to read just the necessary parts of the image file
-            std::ifstream istream(dir_entry.path(), std::ifstream::binary);
+        if(fs::is_regular_file(file_path)) {
 
-            // Parse image EXIF and XMP metadata
-            TinyEXIF::EXIFInfo imageEXIF(istream);
+            fs::path filename = file_path.filename();
 
-            // If the EXIF data not empty show data
-            if(imageEXIF.Fields) {
-                imageEXIF.DateTimeOriginal = formatDate(imageEXIF.DateTimeOriginal);
-
-                // Only if there is a match show data
-                if(matchDate(capture_date, imageEXIF.DateTimeOriginal) && matchModel(camera_model, imageEXIF.Model)) {
-                    count++;
-                    std::cout << std::left << std::setw(FILENAME_WIDTH) << dir_entry.path().filename();
-                    showData(imageEXIF.DateTimeOriginal, CaptureDate);
-                    showData(imageEXIF.Model, CameraModel);
-                    std::cout << std::endl;
-                }
-            } /* else { // only in case of file matching
-                std::cout << std::left << std::setw(FILENAME_WIDTH) << dir_entry.path().filename() << "EXIF data fields unavailable.\n";
+            // Parse EXIF metadata only if the name matches
+            if(matchName(name_opt, filename)) {
                 count++;
-            } */
+                // Open a stream to read just the necessary parts of the image file
+                std::ifstream istream(file_path, std::ifstream::binary);
+
+                // Parse image EXIF and XMP metadata
+                TinyEXIF::EXIFInfo imageEXIF(istream);
+
+                // If the EXIF data not empty show data
+                if(imageEXIF.Fields) {
+                    imageEXIF.DateTimeOriginal = formatDate(imageEXIF.DateTimeOriginal);
+
+                    // Only if there is a match show data
+                    if(matchDate(date_opt, imageEXIF.DateTimeOriginal) && matchModel(model_opt, imageEXIF.Model)) {
+                        std::cout << std::left << std::setw(FILENAME_WIDTH) << filename;
+                        showData(imageEXIF.DateTimeOriginal, CaptureDate);
+                        showData(imageEXIF.Model, CameraModel);
+                        std::cout << std::endl;
+                    }
+                // Even if no EXIF available, show on screen but check that date or model options were NOT provided
+                // to ensure to not show file names with unavailable EXIF data
+                } else if(date_opt.empty() && model_opt.empty()) {
+                    std::cout << std::left << std::setw(FILENAME_WIDTH) << filename << "EXIF data is not available.\n";
+                }
+            }
         }
     }
     return count;
@@ -139,9 +82,9 @@ int main(int argc, char* argv[]) {
         showOptions(file_name, capture_date, camera_model);
     }
 
-    fs::path path = changeDirectory(directory);
+    fs::path path_to_dir = changeDirectory(directory);
 
-    std::cout << searchFiles(path, capture_date, camera_model) << " total found" << std::endl;
+    std::cout << searchFiles(path_to_dir, file_name, capture_date, camera_model) << " total found" << std::endl;
 
     return 0;
 }

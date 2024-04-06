@@ -27,4 +27,8 @@ inline void stringToLower(std::string& s) {
     }
 }
 
+bool matchDate(std::string date_option, std::string exif_date);
+bool matchName(std::string name_option, std::string file_name);
+bool matchModel(std::string model_option, std::string exif_model);
+
 #endif // ARGUMENTS_H
