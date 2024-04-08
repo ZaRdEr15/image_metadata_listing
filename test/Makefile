@@ -29,7 +29,7 @@ CXXFLAGS += -g -Wall -Wextra -pthread
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = arguments_unittest
+TESTS = arguments_unittest parser_unittest
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -76,6 +76,9 @@ gtest_main.a : gtest-all.o gtest_main.o
 SRC = $(USER_DIR)/src
 INCLUDE = $(USER_DIR)/include
 ARGUMENTS_SRC = $(SRC)/arguments
+PARSER_SRC = $(SRC)/parser
+TINYEXIF_SRC = $(SRC)/TinyEXIF
+TINYXML_SRC = $(SRC)/tinyxml2
 
 arguments.o : $(ARGUMENTS_SRC)/arguments.cpp $(INCLUDE)/arguments.h $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INCLUDE) -c $(ARGUMENTS_SRC)/arguments.cpp
@@ -85,4 +88,20 @@ arguments_unittest.o : arguments_unittest.cpp \
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INCLUDE) -c arguments_unittest.cpp
 
 arguments_unittest : arguments.o arguments_unittest.o gtest_main.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INCLUDE) -lpthread $^ -o $@
+
+parser.o : $(PARSER_SRC)/parser.cpp $(INCLUDE)/parser.h $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INCLUDE) -c $(PARSER_SRC)/parser.cpp
+
+parser_unittest.o : parser_unittest.cpp \
+                     $(INCLUDE)/parser.h $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INCLUDE) -c parser_unittest.cpp
+
+TinyEXIF.o : $(TINYEXIF_SRC)/TinyEXIF.cpp $(INCLUDE)/TinyEXIF.h $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INCLUDE) -c $(TINYEXIF_SRC)/TinyEXIF.cpp
+
+tinyxml2.o : $(TINYXML_SRC)/tinyxml2.cpp $(INCLUDE)/tinyxml2.h $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INCLUDE) -c $(TINYXML_SRC)/tinyxml2.cpp
+
+parser_unittest : parser.o parser_unittest.o arguments.o TinyEXIF.o tinyxml2.o gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INCLUDE) -lpthread $^ -o $@
