@@ -15,7 +15,7 @@ inline std::string enumToString(DataType type) {
     return type == CaptureDate ? "Capture Date" : "Camera Model";
 }
 
-// Removes timestamp and replaces ":" with "-"
+// Removes timestamp (HH:MM:SS) and replaces ":" with "-"
 inline std::string formatDate(std::string date) {
     if(!date.empty()) {
         date = date.erase(10);
@@ -25,7 +25,7 @@ inline std::string formatDate(std::string date) {
 }
 
 void showData(std::string data, DataType type);
-size_t searchFiles(std::filesystem::path path, std::string name_opt, std::string date_opt, std::string model_opt);
+size_t searchJPEGFiles(std::filesystem::path path, std::string name_opt, std::string date_opt, std::string model_opt);
 std::filesystem::path changeDirectory(std::string dir);
 
 #endif // PARSER_H

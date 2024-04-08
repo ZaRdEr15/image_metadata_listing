@@ -1,17 +1,16 @@
 #include <unistd.h>     // getopt, optarg, optind
-#include <regex>
-#include <algorithm>    // std::count
+#include <algorithm>    // std::count, std::all_of
 #include "arguments.h"
 
 // Show utility usage
-void showUsage(std::string utility) {
+void showUsage(const std::string& utility) {
     std::cout << "\nUsage: " << utility 
               << " [-n \"file_name\"]" 
               << " [-d \"capture_date\"]" 
               << " [-m \"camera_model\"]" 
               << " directory\n"
-              << "\n\"file_name\" and \"camera_model\" support wildcard symbol '*' for partial matching, such as:\n"
-              << "Starting with: \"abc*\", ending with: \"*abc\", or any: \"*\".\n"
+              << "\n\"file_name\" and \"camera_model\" support wildcard symbol '*' for partial matching:\n"
+              << "\"abcde\" is matched by: \"abc*\", \"*cde\", \"*\", \"*c*\", \"ab*e\".\n"
               << "\"capture_date\" must be an exact match such as \"2024-01-01\".\n" 
               << "Every optional field must be inside quotation marks: -n \"file\", -m \"model\" -d \"2010-01-01\".\n" << std::endl;
     exit(EXIT_FAILURE);
@@ -26,7 +25,7 @@ void showArgs(int argc, char* argv[]) {
 }
 
 // Show options provided for the utility
-void showOptions(std::string name, std::string date, std::string model) {
+void showOptions(const std::string& name, const std::string& date, const std::string& model) {
     std::cout << "Options: \n";
     if(!name.empty()) {
         std::cout << "File name: " << name << "\n";
@@ -67,6 +66,7 @@ OptionsResult getOptions(int argc, char* argv[],
                 model_opt = true;
                 break;
             default:
+                std::cerr << "ERROR: The option provided is invalid." << std::endl;
                 return InvalidOption;
         }
     }
@@ -94,33 +94,20 @@ OptionsResult getOptions(int argc, char* argv[],
     return Success;
 }
 
-// Count how many wildcard symbols inside string
-int countWildcard(std::string s) {
-    return std::count(s.begin(), s.end(), '*');
-}
-
 /*
     Validates if options are correct and saves each option to the
     corresponding string variable
 */
-void validateOptions(int argc, char* argv[], 
-                     std::string& name, std::string& date,
-                     std::string& model, std::string& directory_path) {
-    switch(getOptions(argc, argv, name, date, model, directory_path)) {
-        case InvalidOption:
+void validateOptions(OptionsResult result, const std::string& utility) {
+    switch(result) {
         case NoValue:
             std::cerr << "ERROR: No value provided for the option." << std::endl;
+        case InvalidOption:
         case MissingDirectory:
         case TooManyArgs:
-            showUsage(argv[UTILITY_POS]);
+            showUsage(utility);
         case Success:
             break;
-    }
-
-    // Validate model and name to have only one '*' wildcard symbol
-    if(countWildcard(name) > WILDCARD_MAX || countWildcard(model) > WILDCARD_MAX) {
-        std::cerr << "ERROR: There was more than 1 '*' symbol for option." << std::endl;
-        showUsage(argv[UTILITY_POS]);
     }
 }
 
@@ -128,7 +115,7 @@ void validateOptions(int argc, char* argv[],
     Check exact match of the capture date and return
     true if matches, otherwise false
 */
-bool matchDate(std::string date_option, std::string exif_date) {
+bool matchDate(const std::string& date_option, const std::string& exif_date) {
     // If the option is empty return true
     bool match = true;
     if(!date_option.empty()) { // if there is a capture date option, then check if there is a match
@@ -141,71 +128,67 @@ bool matchDate(std::string date_option, std::string exif_date) {
     return match;
 }
 
-// Remove a wildcard to allow to create regex pattern
-inline std::string removeWildcard(std::string s) {
-    s.erase(std::remove(s.begin(), s.end(), '*'), s.end());
-    return s;
-}
-
-/* 
-    Construct a regex match pattern with a provided regex char set and a possible
-    end matching "$" symbol (applicable to model) based on the wildcard symbol
-    provided in the option
-    Would be an exact match if no wildcard symbol provided
+/*
+    Checks if there is a match between the text and the pattern
+    Pattern can contain a '*' wildcard symbol
+    It matches any character sequence or an empty sequence
+    Returns true if the text matches the pattern, returns false if it does not
 */
-std::string getMatchPattern(std::string opt, std::string regex, std::string end_match = "") {
-    if(countWildcard(opt)) { // if there is a wildcard symbol
-        if(opt[0] == '*') {
-            if(opt.size() == 1) {
-                return regex + "+"; // "*" as option
-            }
-            return regex + "*" + removeWildcard(opt) + end_match; // "*abc" as option
+bool matchPattern(const std::string& text, const std::string& pattern) {
+    size_t i = 0; // Text index
+    size_t j = 0; // Pattern index
+    size_t textBacktrack = -1; // Position to reset to if mismatch of characters or end of pattern
+    size_t nextToWildcard = -1; // Position to reset to if mismatch of characters
+    bool wildcardFound = false;
+    while(i < text.size()) {
+        if(j < pattern.size() && text[i] == pattern[j]) {
+            i++;
+            j++;
+        } else if(j < pattern.size() && pattern[j] == '*') {
+            wildcardFound = true;
+            j++;
+            nextToWildcard = j;
+            textBacktrack = i; // Save and go back from the next to it
+        } else if(wildcardFound == false){
+            return false; // Characters arent same and no wildcard so no match
+        } else {
+            // Wildcard was present, reset to next to wildcard and continue text
+            j = nextToWildcard;
+            textBacktrack++; // Go next from the saved position
+            i = textBacktrack;
         }
-        return "^" + removeWildcard(opt) + regex + "*"; // "abc*" as option
     }
-    return "^" + opt + end_match; // exact match as there is no wildcard symbols
+    // Check if all characters left are wildcard characters
+    // if no there is no match
+    // If the string is at the end returns true
+    return std::all_of(pattern.begin() + j, pattern.end(), [](char c) { return c == '*'; });
 }
 
-/* 
-    Make a regex match with an option and compare to provided file name
+/*
+    Match any .jpg file depending on the wildcard symbol
     If the file name matches, returns true, otherwise false;
-    If the option is empty, returns true;
+    If the option is empty, returns true for any .jpg file;
 */
 bool matchName(std::string name_option, std::string file_name) {
-    const std::string jpg_ext = "\\.jpg$";
-    const std::string char_set = "[\\w-]";
-    // If the option is empty return true
     if(!name_option.empty()) { // if there is a name option, then check if there is a match
-        // Set regex according to wildcard symbol
-        std::string regex_pattern = getMatchPattern(name_option, char_set); // matches a-zA-Z0-9_-
-        regex_pattern += jpg_ext; // matches for any .jpg file
-
-        std::regex name_regex(regex_pattern);
-        
         stringToLower(file_name); // case insensitive match
-        return std::regex_match(file_name, name_regex);
+        name_option += ".jpg";
+        return matchPattern(file_name, name_option);
     }
-    std::regex default_regex(char_set + "+" + jpg_ext);
-    return std::regex_match(file_name, default_regex); // check if the file is a .jpg file
+    // match any .jpg file
+    return matchPattern(file_name, "*.jpg");
 }
 
 /* 
-    Make a regex match with an option and compare to provided camera model
+    Match any camera model depending on the wildcard symbol
     If the model matches, returns true, otherwise false;
     If the option is empty, returns true;
 */
 bool matchModel(std::string model_option, std::string exif_model) {
-    // If the option is empty return true
-    bool match = true;
     if(!model_option.empty()) { // if there is a camera model option, then check if there is a match
-        match = false;
-        // Set regex according to wildcard symbol
-        std::string regex_pattern = getMatchPattern(model_option, "[\\w -]", "$"); // matches a-zA-Z0-9_- and a whitespace
-
-        std::regex model_regex(regex_pattern);
-        
         stringToLower(exif_model); // case insensitive match
-        match = std::regex_match(exif_model, model_regex);
+        return matchPattern(exif_model, model_option);
     }
-    return match;
+    // If the option is empty return true
+    return true;
 }

@@ -4,7 +4,7 @@
 
 namespace fs = std::filesystem; // for convenience
 
-#define DEBUG_MODE 1
+#define DEBUG_MODE 0
 
 int main(int argc, char* argv[]) {
 
@@ -13,7 +13,11 @@ int main(int argc, char* argv[]) {
     }
 
     std::string file_name, capture_date, camera_model, directory;
-    validateOptions(argc, argv, file_name, capture_date, camera_model, directory);
+    OptionsResult result = getOptions(argc, argv, file_name, capture_date, camera_model, directory);
+    if(DEBUG_MODE) {
+        std::cout << "Result code: " << result << std::endl;
+    }
+    validateOptions(result, argv[UTILITY_POS]);
     stringToLower(file_name);    // case insensitive
     stringToLower(camera_model); // case insensitive
 
@@ -23,7 +27,7 @@ int main(int argc, char* argv[]) {
 
     fs::path path_to_dir = changeDirectory(directory);
 
-    std::cout << searchFiles(path_to_dir, file_name, capture_date, camera_model) << " JPEG files found" << std::endl;
+    std::cout << searchJPEGFiles(path_to_dir, file_name, capture_date, camera_model) << " JPEG files found" << std::endl;
 
     return 0;
 }

@@ -3,22 +3,17 @@
 
 #include "common_includes.h"
 
-#define N_ARGUMENTS_MIN 2
-#define N_ARGUMENTS_MAX 8
-
-#define WILDCARD_MAX 1
-
 #define UTILITY_POS 0
 
 enum OptionsResult {Success, InvalidOption, NoValue, MissingDirectory, TooManyArgs};
 
-void showUsage(std::string utility);
+void showUsage(const std::string& utility);
 void showArgs(int argc, char* argv[]);
-void showOptions(std::string name, std::string date, std::string model);
-int countWildcard(std::string s);
-void validateOptions(int argc, char* argv[], 
-                     std::string& name, std::string& date,
-                     std::string& model, std::string& directory_path);
+void showOptions(const std::string& name, const std::string& date, const std::string& model);
+OptionsResult getOptions(int argc, char* argv[], 
+                std::string& name, std::string& date,
+                std::string& model, std::string& directory_path);
+void validateOptions(OptionsResult result, const std::string& utility);
              
 // Convert all characters in a string to lowercase
 inline void stringToLower(std::string& s) {
@@ -27,7 +22,8 @@ inline void stringToLower(std::string& s) {
     }
 }
 
-bool matchDate(std::string date_option, std::string exif_date);
+bool matchDate(const std::string& date_option, const std::string& exif_date);
+bool matchPattern(const std::string& text, const std::string& pattern);
 bool matchName(std::string name_option, std::string file_name);
 bool matchModel(std::string model_option, std::string exif_model);
 
