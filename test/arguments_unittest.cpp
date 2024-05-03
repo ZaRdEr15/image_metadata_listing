@@ -1,6 +1,12 @@
 #include <gtest/gtest.h>
 #include "arguments.h"
 
+TEST(toLowerTest, loweredString) {
+    std::string s = "Hello, World!";
+    stringToLower(s);
+    EXPECT_EQ(s, "hello, world!");
+}
+
 TEST(matchDateTest, ExactMatch) {
     EXPECT_EQ(matchDate("2024-04-07", "2024-04-07"), true);
     EXPECT_EQ(matchDate("2021-01-01", "2022-01-01"), false);

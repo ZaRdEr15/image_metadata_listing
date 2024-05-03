@@ -2,6 +2,7 @@
 #define ARGUMENTS_H
 
 #include "common_includes.h"
+#include <algorithm>
 
 #define UTILITY_POS 0
 
@@ -14,12 +15,9 @@ OptionsResult getOptions(int argc, char* argv[],
                 std::string& name, std::string& date,
                 std::string& model, std::string& directory_path);
 void validateOptions(OptionsResult result, const std::string& utility);
-             
-// Convert all characters in a string to lowercase
+
 inline void stringToLower(std::string& s) {
-    for(size_t i = 0; i < s.size(); i++) {
-        s[i] = static_cast<char>(tolower(s[i]));
-    }
+    std::transform(s.cbegin(), s.cend(), s.begin(), [](unsigned char c){ return std::tolower(c); });
 }
 
 bool matchDate(const std::string& date_option, const std::string& exif_date);
