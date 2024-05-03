@@ -1,5 +1,4 @@
 #include <unistd.h>     // getopt, optarg, optind
-#include <algorithm>    // std::count, std::all_of
 #include "arguments.h"
 
 // Show utility usage
@@ -112,20 +111,15 @@ void validateOptions(OptionsResult result, const std::string& utility) {
 }
 
 /* 
-    Check exact match of the capture date and return
-    true if matches, otherwise false
+    Return true if: 
+    exact match of the capture date
+    date option is empty
 */
 bool matchDate(const std::string& date_option, const std::string& exif_date) {
-    // If the option is empty return true
-    bool match = true;
-    if(!date_option.empty()) { // if there is a capture date option, then check if there is a match
-        match = false;
-        // Exact date match
-        if(date_option == exif_date) {
-            match = true;
-        }
+    if(date_option.empty()) { 
+        return true; 
     }
-    return match;
+    return (date_option == exif_date);
 }
 
 /*

@@ -54,8 +54,12 @@ TEST(matchPatternTest, PartialMatchMix) {
     EXPECT_EQ(matchPattern("aabcc", "a*cb*"), false);
 }
 
-// argc and argv testing is proven to be quite difficult
-// as Google Test main uses its own argc and argv so not every possible case is tested for this function
+/*
+    argc and argv testing is proven to be quite difficult
+    as Google Test main uses its own argc and argv 
+    so not every possible case is tested for this function.
+    Consider manual testing.
+*/
 TEST(getOptionsTest, OptionResultSuccess) {
     int argc = 8;
     char *argv[] = {"./img_metadata", "-n", "Name", "-d", "Date", "-m", "Model", "Directory"};
