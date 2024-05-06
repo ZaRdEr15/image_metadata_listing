@@ -1,4 +1,3 @@
-// Helper function headers
 #include "arguments.h"
 #include "parser.h"
 
@@ -18,16 +17,17 @@ int main(int argc, char* argv[]) {
         std::cout << "Result code: " << result << std::endl;
     }
     validateOptions(result, argv[UTILITY_POS]);
-    stringToLower(file_name);    // case insensitive
-    stringToLower(camera_model); // case insensitive
+
+    file_name = stringToLower(file_name);
+    file_name = stringToLower(camera_model);
 
     if(DEBUG_MODE) {
         showOptions(file_name, capture_date, camera_model);
     }
 
-    fs::path path_to_dir = changeDirectory(directory);
+    handleDirectoryChange(directory);
 
-    std::cout << searchJPEGFiles(path_to_dir, file_name, capture_date, camera_model) << " JPEG files found" << std::endl;
+    std::cout << searchJPEGFiles(file_name, capture_date, camera_model) << " JPEG files found" << std::endl;
 
     return 0;
 }
