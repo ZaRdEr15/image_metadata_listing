@@ -26,8 +26,9 @@ void showData(std::string data, DataType type) {
     Search a directory for .jpg extension files recursively and output metadata on the screen
     Return how many files where found
 */
-size_t searchJPEGFiles(fs::path path, std::string name_opt, std::string date_opt, std::string model_opt) {
+size_t searchJPEGFiles(std::string name_opt, std::string date_opt, std::string model_opt) {
     size_t count = 0;
+    fs::path path = fs::current_path();
     for (const auto& dir_entry : fs::recursive_directory_iterator(path)) {
 
         fs::path file_path = dir_entry.path();
@@ -69,14 +70,11 @@ size_t searchJPEGFiles(fs::path path, std::string name_opt, std::string date_opt
     return count;
 }
 
-fs::path changeDirectory(std::string dir) {
-    fs::path path;
+void handleDirectoryChange(std::string_view dir) {
     try {
-        fs::current_path(dir); // Switch to the provided directory
-        path = fs::current_path();
+        fs::current_path(dir);
     } catch(fs::filesystem_error const& ex) {
         std::cerr << ex.what() << std::endl;
         exit(EXIT_FAILURE);
     }
-    return path;
 }

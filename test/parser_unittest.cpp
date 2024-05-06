@@ -1,17 +1,21 @@
 #include <gtest/gtest.h>
 #include "parser.h"
+#include "arguments.h"
 
-TEST(changeDirectoryTest, SuccessfulDirectoryChange) {
+TEST(handleDirectoryChangeTest, SuccessfulDirectoryChange) {
     std::filesystem::path expected_path = std::filesystem::current_path();
     expected_path /= "Test";
 
-    EXPECT_EQ(changeDirectory("Test"), expected_path);
+    handleDirectoryChange("Test");
+
+    EXPECT_EQ(std::filesystem::current_path(), expected_path);
 }
 
 TEST(searchJPEGFilesTest, FileCount) {
-    std::filesystem::path path = std::filesystem::current_path(); // Already changed to "Test" directory
+    // Already changed to "Test" directory using previous test suite
+    std::filesystem::path path = std::filesystem::current_path();
     std::cout << path << std::endl;
-    int count = searchJPEGFiles(path, "", "", "");
+    int count = searchJPEGFiles("", "", "");
     EXPECT_EQ(count, 3);
 }
 

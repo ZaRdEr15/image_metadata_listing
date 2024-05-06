@@ -25,7 +25,7 @@ inline std::string formatDate(std::string date) {
 }
 
 void showData(std::string data, DataType type);
-size_t searchJPEGFiles(std::filesystem::path path, std::string name_opt, std::string date_opt, std::string model_opt);
-std::filesystem::path changeDirectory(std::string dir);
+size_t searchJPEGFiles(std::string name_opt, std::string date_opt, std::string model_opt);
+void handleDirectoryChange(std::string_view dir);
 
 #endif // PARSER_H
