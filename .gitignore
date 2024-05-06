@@ -1,3 +1,6 @@
 build
 img_metadata
 .vscode
+test/*.a
+test/*.o
+test/*_unittest
