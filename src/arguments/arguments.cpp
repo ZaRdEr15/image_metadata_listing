@@ -1,7 +1,6 @@
 #include <unistd.h>     // getopt, optarg, optind
 #include "arguments.h"
 
-// Show utility usage
 void showUsage(std::string_view utility) {
     std::cout << "\nUsage: " << utility 
               << " [-n \"file_name\"]" 
@@ -15,7 +14,6 @@ void showUsage(std::string_view utility) {
     exit(EXIT_FAILURE);
 }
 
-// Show arguments provided for the utility
 void showArgs(int argc, char* argv[]) {
     std::cout << "Arguments: " << std::endl;
     for(int i = 0; i < argc; i++) {
@@ -23,7 +21,6 @@ void showArgs(int argc, char* argv[]) {
     }
 }
 
-// Show options provided for the utility
 void showOptions(std::string_view name, std::string_view date, std::string_view model) {
     std::cout << "Options: \n";
     if(!name.empty()) {
@@ -93,10 +90,6 @@ OptionsResult getOptions(int argc, char* argv[],
     return Success;
 }
 
-/*
-    Validates if options are correct and saves each option to the
-    corresponding string variable
-*/
 void validateOptions(OptionsResult result, std::string_view utility) {
     switch(result) {
         case NoValue:

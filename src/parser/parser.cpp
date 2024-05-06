@@ -29,28 +29,15 @@ void showData(std::string_view data, DataType type) {
 size_t searchJPEGFiles(std::string name_opt, std::string date_opt, std::string model_opt) {
     size_t count = 0;
     fs::path path = fs::current_path();
-    for (const auto& dir_entry : fs::recursive_directory_iterator(path)) {
-
+    for(const auto& dir_entry : fs::recursive_directory_iterator(path)) {
         fs::path file_path = dir_entry.path();
-
-        // Only open a stream if it is a file and not a directory
         if(fs::is_regular_file(file_path)) {
-
             fs::path filename = file_path.filename();
-
-            // Parse EXIF metadata only if the name matches
             if(matchName(name_opt, filename)) {
-                // Open a stream to read just the necessary parts of the image file
                 std::ifstream istream(file_path, std::ifstream::binary);
-
-                // Parse image EXIF and XMP metadata
                 TinyEXIF::EXIFInfo imageEXIF(istream);
-
-                // If the EXIF data not empty show data
                 if(imageEXIF.Fields) {
                     imageEXIF.DateTimeOriginal = formatDate(imageEXIF.DateTimeOriginal);
-
-                    // Only if there is a match show data
                     if(matchDate(date_opt, imageEXIF.DateTimeOriginal) && matchModel(model_opt, imageEXIF.Model)) {
                         count++;
                         std::cout << std::left << std::setw(FILENAME_WIDTH) << filename;
@@ -58,8 +45,6 @@ size_t searchJPEGFiles(std::string name_opt, std::string date_opt, std::string m
                         showData(imageEXIF.Model, CameraModel);
                         std::cout << std::endl;
                     }
-                // Even if no EXIF available, show on screen but check that date or model options were NOT provided
-                // to ensure to not show file names with unavailable EXIF data
                 } else if(date_opt.empty() && model_opt.empty()) {
                     count++;
                     std::cout << std::left << std::setw(FILENAME_WIDTH) << filename << "EXIF data is not available.\n";
@@ -86,37 +71,32 @@ void handleDirectoryChange(const std::string& dir) {
     Returns true if the text matches the pattern, returns false if it does not
 */
 bool matchPattern(std::string_view text, std::string_view pattern) {
-    size_t i = 0; // Text index
-    size_t j = 0; // Pattern index
-    size_t textBacktrack = -1; // Position to reset to if mismatch of characters or end of pattern
-    size_t nextToWildcard = -1; // Position to reset to if mismatch of characters
+    size_t t_i = 0;
+    size_t p_i = 0;
+    size_t t_back = -1; // Position to reset to if mismatch of characters or end of pattern
+    size_t p_back = -1; // Position to reset to if mismatch of characters
     bool wildcardFound = false;
-    while(i < text.size()) {
-        if(j < pattern.size() && text[i] == pattern[j]) {
-            i++;
-            j++;
-        } else if(j < pattern.size() && pattern[j] == '*') {
+    while(t_i < text.size()) {
+        if(p_i < pattern.size() && text[t_i] == pattern[p_i]) {
+            t_i++;
+            p_i++;
+        } else if(p_i < pattern.size() && pattern[p_i] == '*') {
             wildcardFound = true;
-            j++;
-            nextToWildcard = j;
-            textBacktrack = i; // Save and go back from the next to it
+            p_i++;
+            p_back = p_i;
+            t_back = t_i;
         } else if(wildcardFound == false){
-            return false; // Characters arent same and no wildcard so no match
+            return false;
         } else {
-            // Wildcard was present, reset to next to wildcard and continue text
-            j = nextToWildcard;
-            textBacktrack++; // Go next from the saved position
-            i = textBacktrack;
+            p_i = p_back;
+            t_back++; // Go next from the saved position
+            t_i = t_back;
         }
     }
-    // Check if all characters left are wildcard characters
-    // if no there is no match
-    // If the string is at the end returns true
-    return std::all_of(pattern.begin() + j, pattern.end(), [](char c) { return c == '*'; });
+    return std::all_of(pattern.begin() + p_i, pattern.end(), [](char c) { return c == '*'; });
 }
 
 /*
-    Match any .jpg file depending on the wildcard symbol
     If the file name matches, returns true, otherwise false;
     If the option is empty, returns true for any .jpg file;
 */
@@ -130,9 +110,8 @@ bool matchName(const std::string& name_option, const std::string& file_name) {
 }
 
 /* 
-    Match any camera model depending on the wildcard symbol
-    If the model matches, returns true, otherwise false;
-    If the option is empty, returns true;
+    If the model matches, returns true, otherwise false
+    If the option is empty, returns true
 */
 bool matchModel(const std::string& model_option, const std::string& exif_model) {
     if(!model_option.empty()) {
