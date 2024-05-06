@@ -67,7 +67,11 @@ TEST(searchJPEGFilesTest, FileCount) {
     // Already changed to "Test" directory using previous test suite
     std::filesystem::path path = std::filesystem::current_path();
     std::cout << path << std::endl;
-    int count = searchJPEGFiles("", "", "");
+    Options options;
+    options.name = "";
+    options.date = "";
+    options.model = "";
+    int count = searchJPEGFiles(options);
     EXPECT_EQ(count, 3);
 }
 

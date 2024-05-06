@@ -10,13 +10,13 @@
 TEST(getOptionsTest, OptionResultSuccess) {
     int argc = 8;
     char *argv[] = {"./img_metadata", "-n", "Name", "-d", "Date", "-m", "Model", "Directory"};
-    std::string name, date, model, dir;
-
-    OptionsResult result = getOptions(argc, argv, name, date, model, dir);
+    
+    Options options;
+    OptionsResult result = getOptions(argc, argv, options);
 
     EXPECT_EQ(result, Success);
-    EXPECT_EQ(name, "Name");
-    EXPECT_EQ(date, "Date");
-    EXPECT_EQ(model, "Model");
-    EXPECT_EQ(dir, "Directory");
+    EXPECT_EQ(options.name, "Name");
+    EXPECT_EQ(options.date, "Date");
+    EXPECT_EQ(options.model, "Model");
+    EXPECT_EQ(options.path, "Directory");
 }

@@ -11,23 +11,23 @@ int main(int argc, char* argv[]) {
         showArgs(argc, argv);
     }
 
-    std::string file_name, capture_date, camera_model, directory;
-    OptionsResult result = getOptions(argc, argv, file_name, capture_date, camera_model, directory);
+    Options options;
+    OptionsResult result = getOptions(argc, argv, options);
     if(DEBUG_MODE) {
         std::cout << "Result code: " << result << std::endl;
     }
     validateOptions(result, argv[UTILITY_POS]);
 
-    file_name = stringToLower(file_name);
-    file_name = stringToLower(camera_model);
+    options.name = stringToLower(options.name);
+    options.model = stringToLower(options.model);
 
     if(DEBUG_MODE) {
-        showOptions(file_name, capture_date, camera_model);
+        showOptions(options);
     }
 
-    handleDirectoryChange(directory);
+    handleDirectoryChange(options.path);
 
-    std::cout << searchJPEGFiles(file_name, capture_date, camera_model) << " JPEG files found" << std::endl;
+    std::cout << searchJPEGFiles(options) << " JPEG files found" << std::endl;
 
     return 0;
 }

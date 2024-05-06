@@ -26,26 +26,26 @@ void showData(std::string_view data, DataType type) {
     Search a directory for .jpg extension files recursively and output metadata on the screen
     Return how many files where found
 */
-size_t searchJPEGFiles(std::string name_opt, std::string date_opt, std::string model_opt) {
+size_t searchJPEGFiles(const Options& options) {
     size_t count = 0;
     fs::path path = fs::current_path();
     for(const auto& dir_entry : fs::recursive_directory_iterator(path)) {
         fs::path file_path = dir_entry.path();
         if(fs::is_regular_file(file_path)) {
             fs::path filename = file_path.filename();
-            if(matchName(name_opt, filename)) {
+            if(matchName(options.name, filename)) {
                 std::ifstream istream(file_path, std::ifstream::binary);
                 TinyEXIF::EXIFInfo imageEXIF(istream);
                 if(imageEXIF.Fields) {
                     imageEXIF.DateTimeOriginal = formatDate(imageEXIF.DateTimeOriginal);
-                    if(matchDate(date_opt, imageEXIF.DateTimeOriginal) && matchModel(model_opt, imageEXIF.Model)) {
+                    if(matchDate(options.date, imageEXIF.DateTimeOriginal) && matchModel(options.model, imageEXIF.Model)) {
                         count++;
-                        std::cout << std::left << std::setw(FILENAME_WIDTH) << filename;
+                        std::cout << std::left << std::setw(FILENAME_WIDTH) << filename.generic_string();
                         showData(imageEXIF.DateTimeOriginal, CaptureDate);
                         showData(imageEXIF.Model, CameraModel);
                         std::cout << std::endl;
                     }
-                } else if(date_opt.empty() && model_opt.empty()) {
+                } else if(options.date.empty() && options.model.empty()) {
                     count++;
                     std::cout << std::left << std::setw(FILENAME_WIDTH) << filename << "EXIF data is not available.\n";
                 }

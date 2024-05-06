@@ -48,9 +48,7 @@ inline std::string stringToLower(const std::string& s) {
 bool matchPattern(std::string_view text, std::string_view pattern);
 bool matchName(const std::string& name_option, const std::string& file_name);
 bool matchModel(const std::string& model_option, const std::string& exif_model);
-
-void showData(std::string_view data, DataType type);
-size_t searchJPEGFiles(std::string name_opt, std::string date_opt, std::string model_opt);
+size_t searchJPEGFiles(const Options& options);
 void handleDirectoryChange(const std::string& dir);
 
 #endif // PARSER_H

@@ -21,45 +21,39 @@ void showArgs(int argc, char* argv[]) {
     }
 }
 
-void showOptions(std::string_view name, std::string_view date, std::string_view model) {
+void showOptions(const Options& options) {
     std::cout << "Options: \n";
-    if(!name.empty()) {
-        std::cout << "File name: " << name << "\n";
+    if(!options.name.empty()) {
+        std::cout << "File name: " << options.name << "\n";
     }
-    if(!date.empty()) {
-        std::cout << "Capture date: " << date << "\n";
+    if(!options.date.empty()) {
+        std::cout << "Capture date: " << options.date << "\n";
     }
-    if(!model.empty()) {
-        std::cout << "Camera model: " << model << "\n";
+    if(!options.model.empty()) {
+        std::cout << "Camera model: " << options.model << "\n";
     }      
 }
 
-/*
-    Saves options to corresponding string variables and
-    returns a result code
-*/
-OptionsResult getOptions(int argc, char* argv[], 
-                std::string& name, std::string& date,
-                std::string& model, std::string& directory_path) {
+inline bool noOptSet(bool opt_set, std::string_view s){
+    return (opt_set && s.empty());
+}
+
+OptionsResult getOptions(int argc, char* argv[], Options& options) {
     int opt;
-    // Check if option that was provided has a value
-    bool name_opt = false; 
-    bool date_opt = false;
-    bool model_opt = false;
     // Handles options with values such as -n, -d and -m 
     while((opt = getopt(argc, argv, "n:d:m:")) != EOF) {
         switch(opt) {
             case 'n':
-                name = optarg;
-                name_opt = true;
+                options.name = optarg;
+                options.name_set = true;
                 break;
             case 'd':
-                date = optarg;
-                date_opt = true;
+                options.date = optarg;
+                options.date_set = true;
                 break;
             case 'm':
-                model = optarg;
-                model_opt = true;
+                options.model = optarg;
+                options.model_set = true;
                 break;
             default:
                 std::cerr << "ERROR: The option provided is invalid." << std::endl;
@@ -67,15 +61,11 @@ OptionsResult getOptions(int argc, char* argv[],
         }
     }
 
-    // Return NoValue result if option provided but without a value
-    if(name_opt) {
-        if(name.empty()) return NoValue;
-    }
-    if(date_opt) {
-        if(date.empty()) return NoValue;
-    }
-    if(model_opt) {
-        if(model.empty()) return NoValue;
+    if(noOptSet(options.name_set, options.name) || 
+       noOptSet(options.date_set, options.date) || 
+       noOptSet(options.model_set, options.model)) {
+        std::cerr << "ERROR: No value provided for the option." << std::endl;
+        return NoValue;
     }
 
     if(optind >= argc) {
@@ -86,14 +76,13 @@ OptionsResult getOptions(int argc, char* argv[],
         std::cerr << "ERROR: Too many arguments provided." << std::endl;
         return TooManyArgs;
     }
-    directory_path = argv[optind];
+    options.path = argv[optind];
     return Success;
 }
 
 void validateOptions(OptionsResult result, std::string_view utility) {
     switch(result) {
         case NoValue:
-            std::cerr << "ERROR: No value provided for the option." << std::endl;
         case InvalidOption:
         case MissingDirectory:
         case TooManyArgs:
