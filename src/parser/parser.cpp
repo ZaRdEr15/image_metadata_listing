@@ -1,7 +1,6 @@
 #include <fstream>      // ifstream
 #include <iomanip>      // setw
 #include <regex>        // regex_replace, regex_match
-#include <filesystem>
 #include "parser.h"
 
 // External library for EXIF metadata parsing
@@ -9,29 +8,58 @@
 
 namespace fs = std::filesystem;
 
+void formatPrint(const std::string& data) {
+    const std::string emptyData = "No data";
+    const std::string dataToPrint = data.empty() ? emptyData : data;
+    int columnWidth = dataToPrint.size() + COLUMN_SPACING;
+    std::cout << std::left << std::setw(columnWidth) << dataToPrint;
+}
+
 /*
     Shows JPEG capture date and camera model data
     If the data is empty, prints "Doesn't exist"
 */
-void showData(std::string_view data, DataType type) {
-    std::cout << enumToString(type) << ": ";
-    int column_width = type == CaptureDate ? DATE_COLUMN_WIDTH : MODEL_COLUMN_WIDTH;
-    if(!data.empty()) {
-        std::cout << std::setw(column_width) << data;
-    } else {
-        std::cout << std::setw(column_width) << "Doesn't exist";
-    }
+void showData(std::string_view data) {
+    // ????
 }
 
 // Removes timestamp (HH:MM:SS) and replaces ":" with "-"
 inline std::string formatDate(const std::string& date) {
-    if(date.empty()) {
-        return date;
-    }
+    if(date.empty()) {return date;}
     std::string date_copy = date;
     date_copy = date_copy.erase(10);
     std::replace(date_copy.begin(), date_copy.end(), ':', '-');
     return date_copy;
+}
+
+TinyEXIF::EXIFInfo getEXIFInfo(const fs::path& file_path) {
+    std::ifstream istream(file_path, std::ifstream::binary);
+    TinyEXIF::EXIFInfo imageEXIF(istream);
+    return imageEXIF;
+}
+
+// Returns 1 if data matches the options, otherwise 0
+size_t parseEXIF(const fs::path& file_path, const Options& options) {
+    std::string filename = file_path.filename().generic_string();
+    if(matchName(options.name, filename)) {
+        TinyEXIF::EXIFInfo imageEXIF = getEXIFInfo(file_path);
+        if(imageEXIF.Fields) {
+            imageEXIF.DateTimeOriginal = formatDate(imageEXIF.DateTimeOriginal);
+            if(matchDate(options.date, imageEXIF.DateTimeOriginal) && 
+               matchModel(options.model, imageEXIF.Model)) {
+                formatPrint(imageEXIF.DateTimeOriginal);
+                formatPrint(imageEXIF.Model);
+                formatPrint(filename);
+                std::cout << std::endl;
+                return 1;
+            }
+        } else if(options.date.empty() && options.model.empty()) {
+            formatPrint(filename); 
+            std::cout << "EXIF data is unavailable.\n";
+            return 1;
+        }
+    }
+    return 0;
 }
 
 /*
@@ -40,29 +68,12 @@ inline std::string formatDate(const std::string& date) {
 */
 size_t searchJPEGFiles(const Options& options) {
     size_t count = 0;
-    fs::path path = fs::current_path();
-    for(const auto& dir_entry : fs::recursive_directory_iterator(path)) {
-        fs::path file_path = dir_entry.path();
+    for(const auto& dir_entry : fs::recursive_directory_iterator(fs::current_path())) {
+        const fs::path file_path = dir_entry.path();
         if(fs::is_regular_file(file_path)) {
-            fs::path filename = file_path.filename();
-            if(matchName(options.name, filename)) {
-                std::ifstream istream(file_path, std::ifstream::binary);
-                TinyEXIF::EXIFInfo imageEXIF(istream);
-                if(imageEXIF.Fields) {
-                    imageEXIF.DateTimeOriginal = formatDate(imageEXIF.DateTimeOriginal);
-                    if(matchDate(options.date, imageEXIF.DateTimeOriginal) && matchModel(options.model, imageEXIF.Model)) {
-                        count++;
-                        std::cout << std::left << std::setw(FILENAME_WIDTH) << filename.generic_string();
-                        showData(imageEXIF.DateTimeOriginal, CaptureDate);
-                        showData(imageEXIF.Model, CameraModel);
-                        std::cout << std::endl;
-                    }
-                } else if(options.date.empty() && options.model.empty()) {
-                    count++;
-                    std::cout << std::left << std::setw(FILENAME_WIDTH) << filename << "EXIF data is not available.\n";
-                }
-            }
+            count += parseEXIF(file_path, options);
         }
+        // Show some error if unable to read file!!!!!
     }
     return count;
 }
@@ -82,9 +93,7 @@ void handleDirectoryChange(const std::string& dir) {
     date option is empty
 */
 inline bool matchDate(std::string_view date_option, std::string_view exif_date) {
-    if(date_option.empty()) { 
-        return true; 
-    }
+    if(date_option.empty()) {return true;}
     return (date_option == exif_date);
 }
 
