@@ -1,7 +1,7 @@
 #include <fstream>      // ifstream
 #include <iomanip>      // std::setw
+#include <regex>
 #include "parser.h"
-#include "arguments.h"
 
 // External library for EXIF metadata parsing
 #include "TinyEXIF.h"
@@ -65,35 +65,14 @@ void handleDirectoryChange(const std::string& dir) {
 }
 
 /*
-    Checks if there is a match between the text and the pattern
     Pattern can contain a '*' wildcard symbol
-    It matches any character sequence or an empty sequence
-    Returns true if the text matches the pattern, returns false if it does not
+    '*' matches any character sequence or an empty sequence
 */
-bool matchPattern(std::string_view text, std::string_view pattern) {
-    size_t t_i = 0;
-    size_t p_i = 0;
-    size_t t_back = -1; // Position to reset to if mismatch of characters or end of pattern
-    size_t p_back = -1; // Position to reset to if mismatch of characters
-    bool wildcardFound = false;
-    while(t_i < text.size()) {
-        if(p_i < pattern.size() && text[t_i] == pattern[p_i]) {
-            t_i++;
-            p_i++;
-        } else if(p_i < pattern.size() && pattern[p_i] == '*') {
-            wildcardFound = true;
-            p_i++;
-            p_back = p_i;
-            t_back = t_i;
-        } else if(wildcardFound == false){
-            return false;
-        } else {
-            p_i = p_back;
-            t_back++; // Go next from the saved position
-            t_i = t_back;
-        }
-    }
-    return std::all_of(pattern.begin() + p_i, pattern.end(), [](char c) { return c == '*'; });
+bool matchPattern(const std::string& text, const std::string& pattern) {
+    std::regex star_replace("\\*");
+    std::string wildcard_pattern = std::regex_replace(pattern, star_replace, ".*");
+    std::regex wildcard_regex("^" + wildcard_pattern + "$");
+    return std::regex_match(text, wildcard_regex);
 }
 
 /*
@@ -103,10 +82,10 @@ bool matchPattern(std::string_view text, std::string_view pattern) {
 bool matchName(const std::string& name_option, const std::string& file_name) {
     if(!name_option.empty()) {
         std::string file_name_lower = stringToLower(file_name);
-        return matchPattern(file_name_lower, name_option + ".jpg");
+        return matchPattern(file_name_lower, name_option + "\\.jpg");
     }
     // match any .jpg file
-    return matchPattern(file_name, "*.jpg");
+    return matchPattern(file_name, "*\\.jpg");
 }
 
 /* 

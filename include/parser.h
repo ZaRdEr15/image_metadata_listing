@@ -45,7 +45,7 @@ inline std::string stringToLower(const std::string& s) {
     return s_copy;
 }
 
-bool matchPattern(std::string_view text, std::string_view pattern);
+bool matchPattern(const std::string& text, const std::string& pattern);
 bool matchName(const std::string& name_option, const std::string& file_name);
 bool matchModel(const std::string& model_option, const std::string& exif_model);
 size_t searchJPEGFiles(const Options& options);
