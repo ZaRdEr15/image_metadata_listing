@@ -1,6 +1,7 @@
 #include <fstream>      // ifstream
-#include <iomanip>      // std::setw
-#include <regex>
+#include <iomanip>      // setw
+#include <regex>        // regex_replace, regex_match
+#include <filesystem>
 #include "parser.h"
 
 // External library for EXIF metadata parsing
@@ -20,6 +21,17 @@ void showData(std::string_view data, DataType type) {
     } else {
         std::cout << std::setw(column_width) << "Doesn't exist";
     }
+}
+
+// Removes timestamp (HH:MM:SS) and replaces ":" with "-"
+inline std::string formatDate(const std::string& date) {
+    if(date.empty()) {
+        return date;
+    }
+    std::string date_copy = date;
+    date_copy = date_copy.erase(10);
+    std::replace(date_copy.begin(), date_copy.end(), ':', '-');
+    return date_copy;
 }
 
 /*
@@ -62,6 +74,18 @@ void handleDirectoryChange(const std::string& dir) {
         std::cerr << ex.what() << std::endl;
         exit(EXIT_FAILURE);
     }
+}
+
+/* 
+    Return true if: 
+    exact match of the capture date
+    date option is empty
+*/
+inline bool matchDate(std::string_view date_option, std::string_view exif_date) {
+    if(date_option.empty()) { 
+        return true; 
+    }
+    return (date_option == exif_date);
 }
 
 /*

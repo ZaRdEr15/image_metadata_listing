@@ -21,17 +21,17 @@ void showArgs(int argc, char* argv[]) {
     }
 }
 
+void showData(std::string_view field, const std::string& prompt) {
+    if(!field.empty()) {
+        std::cout << prompt + ": " << field << "\n";
+    }
+}
+
 void showOptions(const Options& options) {
     std::cout << "Options: \n";
-    if(!options.name.empty()) {
-        std::cout << "File name: " << options.name << "\n";
-    }
-    if(!options.date.empty()) {
-        std::cout << "Capture date: " << options.date << "\n";
-    }
-    if(!options.model.empty()) {
-        std::cout << "Camera model: " << options.model << "\n";
-    }      
+    showData(options.name, "File name");
+    showData(options.date, "Capture date");
+    showData(options.model, "Camera model");     
 }
 
 inline bool noOptSet(bool opt_set, std::string_view s){
